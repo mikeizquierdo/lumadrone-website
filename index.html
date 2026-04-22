@@ -867,11 +867,6 @@
   }
 
   option { background: var(--deep); }
-  .gallery { background: var(--off-black); }
-  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 3rem; }
-  .gallery-grid canvas { width: 100%; display: block; border: 1px solid var(--border); }
-  @media (max-width: 900px) { .gallery-grid { grid-template-columns: 1fr; } }
-
 </style>
 </head>
 <body>
@@ -886,7 +881,6 @@
     <li><a href="#markets" onclick="closeNav()">Markets</a></li>
     <li><a href="#fleet" onclick="closeNav()">Fleet</a></li>
     <li><a href="#process" onclick="closeNav()">Process</a></li>
-    <li><a href="#gallery" onclick="closeNav()">Gallery</a></li>
     <li><a href="#pricing" onclick="closeNav()">Pricing</a></li>
     
     <li><a href="#contact" onclick="closeNav()">Contact</a></li>
@@ -1124,34 +1118,6 @@
 </section>
 
 
-
-
-<!-- Gallery -->
-<section class="gallery" id="gallery">
-  <div class="section-label">Formations</div>
-  <h2 class="section-title reveal">THE WORK</h2>
-  <p class="reveal" style="color:var(--muted);max-width:520px;font-weight:300;">Every show is a fully custom creation. Below are a few of the formations we bring to life — each one built for a specific event, audience, and sky.</p>
-  <div class="gallery-grid reveal">
-    <canvas id="drone-art-1" height="360"></canvas>
-    <canvas id="drone-art-2" height="360"></canvas>
-    <canvas id="drone-art-3" height="360"></canvas>
-    <canvas id="drone-art-4" height="360"></canvas>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;" class="reveal">
-    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">500</div>
-      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Drones per show</div>
-    </div>
-    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">15+</div>
-      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Minutes of sky</div>
-    </div>
-    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">100%</div>
-      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Custom choreography</div>
-    </div>
-  </div>
-</section>
 
 <!-- Pricing -->
 <section class="pricing" id="pricing">
@@ -1467,9 +1433,13 @@
   // Video lightbox
   const lightbox = document.getElementById('videoLightbox');
   document.getElementById('playBtn').addEventListener('click', () => {
-    {
+    if (!YOUTUBE_VIDEO_ID) {
+      document.querySelector('.reel-placeholder-text').style.color = '#4A9EFF';
+      document.querySelector('.reel-placeholder-text').textContent = '⚡ Set YOUTUBE_VIDEO_ID at the top of the script to activate this player';
+      return;
+    }
     const container = document.getElementById('videoContainer');
-    container.innerHTML = `<iframe width="100%" height="100%" src="https://player.vimeo.com/video/1008611292?autoplay=1&title=0&byline=0&portrait=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display:block;"></iframe>`;
+    container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="display:block;"></iframe>`;
     lightbox.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   });
@@ -1566,115 +1536,6 @@
         <div style="font-size:14px;color:rgba(220,232,255,0.5);line-height:1.7;">We'll be in touch within 24 hours.<br>Check your inbox for a confirmation.</div>
       </div>`;
   }
-</script>
-
-<script>
-(function(){
-  function S(id,fn){
-    var c=document.getElementById(id);
-    if(!c)return;
-    c.width=c.parentElement.offsetWidth||600;
-    fn(c);
-  }
-  function bg(ctx,W,H,col){
-    ctx.fillStyle=col||'#04070e';
-    ctx.fillRect(0,0,W,H);
-  }
-  function stars(ctx,W,H){
-    for(var i=0;i<90;i++){
-      ctx.beginPath();
-      ctx.arc(Math.random()*W,Math.random()*H,Math.random()*1.5,0,Math.PI*2);
-      ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.5+0.1)+')';
-      ctx.fill();
-    }
-  }
-  function dot(ctx,x,y,r,col){
-    var g=ctx.createRadialGradient(x,y,0,x,y,r);
-    g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
-    ctx.beginPath();ctx.arc(x,y,r*0.25,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.95)';ctx.fill();
-  }
-  function lbl(ctx,W,H,t,col){
-    ctx.font='10px monospace';ctx.fillStyle=col;ctx.fillText(t,16,H-16);
-  }
-  function scene1(c){
-    var ctx=c.getContext('2d'),W=c.width,H=c.height;
-    bg(ctx,W,H);stars(ctx,W,H);
-    var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,180);
-    g.addColorStop(0,'rgba(74,158,255,0.08)');g.addColorStop(1,'transparent');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    for(var lat=-75;lat<=75;lat+=13){
-      var cosL=Math.cos(lat*Math.PI/180),sinL=Math.sin(lat*Math.PI/180);
-      var r=cosL*120,yOff=sinL*120;
-      var n=Math.max(1,Math.round(cosL*26));
-      for(var i=0;i<n;i++){
-        var a=(i/n)*Math.PI*2;
-        dot(ctx,W/2+Math.cos(a)*r,H/2+yOff,6,'rgba(74,158,255,0.85)');
-      }
-    }
-    lbl(ctx,W,H,'GLOBE FORMATION  ·  CORPORATE LAUNCH','rgba(74,158,255,0.6)');
-  }
-  function scene2(c){
-    var ctx=c.getContext('2d'),W=c.width,H=c.height;
-    bg(ctx,W,H,'#060408');stars(ctx,W,H);
-    var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,200);
-    g.addColorStop(0,'rgba(255,80,120,0.08)');g.addColorStop(1,'transparent');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    for(var t=0;t<Math.PI*2;t+=0.07){
-      var hx=16*Math.pow(Math.sin(t),3);
-      var hy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));
-      dot(ctx,W/2+hx*13,H/2+hy*13+10,7,'rgba(255,80,140,0.9)');
-    }
-    for(var i=0;i<200;i++){
-      var t2=Math.random()*Math.PI*2,s=Math.sqrt(Math.random());
-      var hx2=16*Math.pow(Math.sin(t2),3)*s;
-      var hy2=-(13*Math.cos(t2)-5*Math.cos(2*t2)-2*Math.cos(3*t2)-Math.cos(4*t2))*s;
-      dot(ctx,W/2+hx2*12,H/2+hy2*12+10,5,'rgba(255,100,160,0.7)');
-    }
-    lbl(ctx,W,H,'HEART FORMATION  ·  WEDDING & PRIVATE','rgba(255,100,150,0.6)');
-  }
-  function scene3(c){
-    var ctx=c.getContext('2d'),W=c.width,H=c.height;
-    bg(ctx,W,H,'#060508');stars(ctx,W,H);
-    var g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,200);
-    g.addColorStop(0,'rgba(200,169,110,0.1)');g.addColorStop(1,'transparent');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-    [50,100,150].forEach(function(r,ri){
-      var n=Math.round(r*0.55);
-      for(var i=0;i<n;i++){
-        var a=(i/n)*Math.PI*2;
-        dot(ctx,W/2+Math.cos(a)*r,H/2+Math.sin(a)*r,5-ri,'rgba(200,169,110,0.85)');
-      }
-    });
-    for(var i=0;i<12;i++){
-      var a=(i/12)*Math.PI*2-Math.PI/2;
-      for(var r=20;r<=165;r+=9){
-        dot(ctx,W/2+Math.cos(a)*r,H/2+Math.sin(a)*r,5,'rgba(200,169,110,0.85)');
-      }
-    }
-    lbl(ctx,W,H,'STARBURST FORMATION  ·  STADIUM OPENER','rgba(200,169,110,0.6)');
-  }
-  function scene4(c){
-    var ctx=c.getContext('2d'),W=c.width,H=c.height;
-    bg(ctx,W,H,'#030610');stars(ctx,W,H);
-    var cols=['rgba(74,158,255,0.85)','rgba(100,220,180,0.85)','rgba(200,169,110,0.85)'];
-    for(var w=0;w<3;w++){
-      var amp=95-w*26,phase=(w/3)*Math.PI*1.5;
-      for(var x=0;x<W;x+=11){
-        var angle=(x/W)*Math.PI*3.5+phase;
-        dot(ctx,x,H/2-Math.sin(angle)*amp,6-w,cols[w]);
-        dot(ctx,x,H/2+Math.sin(angle)*amp,6-w,cols[w]);
-      }
-    }
-    lbl(ctx,W,H,'WAVE FORMATION  ·  MUSIC FESTIVAL','rgba(100,220,180,0.6)');
-  }
-  window.addEventListener('load',function(){
-    S('drone-art-1',scene1);
-    S('drone-art-2',scene2);
-    S('drone-art-3',scene3);
-    S('drone-art-4',scene4);
-  });
-})();
 </script>
 </body>
 </html>
