@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luma Drone — Sky Is Your Canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #05080f;
+    --off-black: #080d18;
+    --deep: #0a1020;
+    --surface: #0e1628;
+    --border: rgba(100,160,255,0.1);
+    --border-strong: rgba(100,160,255,0.2);
+    --gold: #4A9EFF;
+    --gold-light: #7bbdff;
+    --gold-dim: rgba(74,158,255,0.12);
+    --white: #eef3ff;
+    --muted: rgba(220,232,255,0.5);
+    --subtle: rgba(220,232,255,0.2);
+    --accent: #4A9EFF;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    transform: translate(-50%, -50%);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(74,158,255,0.4);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.4s ease, width 0.3s ease, height 0.3s ease;
+    transform: translate(-50%, -50%);
+  }
+  body:has(a:hover) .cursor-ring,
+  body:has(button:hover) .cursor-ring { width: 48px; height: 48px; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 1.5rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid transparent;
+    transition: all 0.4s ease;
+  }
+  nav.scrolled {
+    background: rgba(5,8,15,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom-color: var(--border);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--gold); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    font-weight: 400;
+  }
+  .nav-links a:hover { color: var(--white); }
+  .nav-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    padding: 0.55rem 1.4rem;
+    text-decoration: none;
+    transition: all 0.25s;
+    cursor: none;
+  }
+  .nav-cta:hover {
+    background: var(--gold);
+    color: var(--black);
+  }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    position: relative;
+    overflow: hidden;
+    padding: 0 3rem 6rem;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 60% 30%, rgba(74,158,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 20% 70%, rgba(120,80,255,0.05) 0%, transparent 50%),
+      linear-gradient(180deg, rgba(5,8,15,0) 0%, rgba(5,8,15,0.6) 60%, var(--black) 100%);
+    z-index: 1;
+  }
+
+  /* Animated star field */
+  .stars {
+    position: absolute; inset: 0; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: var(--white);
+    border-radius: 50%;
+    animation: twinkle var(--dur, 4s) ease-in-out infinite;
+    animation-delay: var(--del, 0s);
+    opacity: 0;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(1); }
+    50% { opacity: var(--op, 0.6); transform: scale(1.2); }
+  }
+
+  /* Drone swarm animation */
+  .drone-canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  .hero-content { position: relative; z-index: 2; max-width: 900px; }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.3s forwards;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 40px; height: 1px;
+    background: var(--gold);
+  }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(5rem, 12vw, 10rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.5s forwards;
+  }
+  .hero-title .gold { color: var(--gold); }
+  .hero-title .stroke {
+    -webkit-text-stroke: 1px var(--white);
+    color: transparent;
+  }
+
+  .hero-body {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.7s forwards;
+  }
+
+  .hero-actions {
+    display: flex; align-items: center; gap: 2rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.9s forwards;
+  }
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: var(--gold);
+    color: var(--black);
+    padding: 1rem 2.5rem;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.25s;
+    cursor: none;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .btn-ghost {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    display: flex; align-items: center; gap: 0.75rem;
+    transition: color 0.2s;
+    cursor: none;
+  }
+  .btn-ghost:hover { color: var(--white); }
+  .btn-ghost .arrow {
+    width: 32px; height: 1px;
+    background: currentColor;
+    position: relative;
+    transition: width 0.2s;
+  }
+  .btn-ghost:hover .arrow { width: 48px; }
+  .btn-ghost .arrow::after {
+    content: '';
+    position: absolute;
+    right: 0; top: -3px;
+    width: 7px; height: 7px;
+    border-right: 1px solid currentColor;
+    border-top: 1px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  .hero-stats {
+    position: absolute;
+    right: 3rem; bottom: 6rem;
+    z-index: 2;
+    display: flex; flex-direction: column; gap: 2rem;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.2s forwards;
+  }
+  .stat { text-align: right; }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.8rem;
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+  .stat-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Scroll indicator */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.5s forwards;
+  }
+  .scroll-hint span {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    writing-mode: vertical-lr;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0.3; transform: scaleY(1); }
+    50% { opacity: 1; transform: scaleY(1.2); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Section base */
+  section { padding: 8rem 3rem; position: relative; }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 28px; height: 1px;
+    background: var(--gold);
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Markets */
+  .markets { background: var(--off-black); }
+  .markets-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 4rem;
+  }
+  .market-card {
+    background: var(--off-black);
+    padding: 2.5rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: background 0.3s;
+  }
+  .market-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--gold);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+    transform-origin: left;
+  }
+  .market-card:hover { background: var(--surface); }
+  .market-card:hover::before { transform: scaleX(1); }
+  .market-icon {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    filter: grayscale(0.3);
+  }
+  .market-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    color: var(--white);
+  }
+  .market-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    font-weight: 300;
+  }
+  .market-price {
+    margin-top: 1.5rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+  }
+
+  /* Fleet section */
+  .fleet { background: var(--black); overflow: hidden; }
+  .fleet-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+  }
+  .fleet-visual {
+    position: relative;
+    height: 480px;
+  }
+  .fleet-grid {
+    display: grid;
+    grid-template-columns: repeat(20, 1fr);
+    grid-template-rows: repeat(20, 1fr);
+    gap: 3px;
+    width: 100%; height: 100%;
+  }
+  .drone-dot {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: var(--gold);
+    opacity: 0;
+    animation: droneAppear 0.05s ease forwards;
+    animation-delay: var(--d);
+  }
+  @keyframes droneAppear {
+    to { opacity: var(--op, 0.6); }
+  }
+  .fleet-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 8rem;
+    color: var(--gold);
+    opacity: 0.08;
+    pointer-events: none;
+    letter-spacing: 0.1em;
+  }
+  .fleet-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .fleet-stat {
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .fleet-stat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 100%;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+  .fleet-stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .fleet-stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Why section */
+  .why { background: var(--deep); }
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 4rem;
+  }
+  .why-card {
+    padding: 2.5rem;
+    border: 1px solid var(--border);
+    position: relative;
+    background: var(--off-black);
+    transition: border-color 0.3s;
+  }
+  .why-card:hover { border-color: var(--gold-light); }
+  .why-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: var(--gold);
+    opacity: 0.15;
+    line-height: 1;
+    margin-bottom: 1rem;
+    letter-spacing: 0.05em;
+  }
+  .why-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+  .why-desc { font-size: 14px; color: var(--muted); line-height: 1.7; font-weight: 300; }
+
+  /* Showreel */
+  .showreel {
+    background: var(--black);
+    padding: 8rem 3rem;
+    text-align: center;
+  }
+  .reel-frame {
+    margin: 4rem auto 0;
+    max-width: 900px;
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+  }
+  .reel-frame::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(74,158,255,0.08), transparent);
+  }
+  .play-btn {
+    width: 80px; height: 80px;
+    border: 1px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: none;
+    transition: all 0.3s;
+    position: relative; z-index: 1;
+    background: transparent;
+  }
+  .play-btn:hover { background: var(--gold-dim); transform: scale(1.1); }
+  .play-triangle {
+    width: 0; height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 20px solid var(--gold);
+    margin-left: 4px;
+  }
+  .reel-label {
+    position: absolute;
+    bottom: 2rem; left: 2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .reel-placeholder-text {
+    position: absolute;
+    bottom: 2rem; right: 2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--subtle);
+    max-width: 260px;
+    text-align: right;
+    line-height: 1.5;
+    transition: color 0.3s;
+  }
+
+  /* Process */
+  .process { background: var(--off-black); }
+  .process-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-top: 4rem;
+    position: relative;
+  }
+  .process-steps::before {
+    content: '';
+    position: absolute;
+    top: 2.5rem; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-strong) 20%, var(--border-strong) 80%, transparent);
+  }
+  .process-step { padding: 0 2rem 0 0; position: relative; }
+  .step-dot {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    position: relative; z-index: 1;
+  }
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .step-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+  }
+  .step-desc { font-size: 13px; color: var(--muted); line-height: 1.6; font-weight: 300; }
+
+  /* Pricing */
+  .pricing { background: var(--black); }
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 4rem;
+  }
+  .pricing-card {
+    padding: 2.5rem;
+    border: 1px solid var(--border);
+    position: relative;
+    background: var(--off-black);
+    transition: all 0.3s;
+  }
+  .pricing-card.featured {
+    border-color: var(--gold);
+    background: var(--surface);
+  }
+  .pricing-card.featured::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: -1px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #05080f;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    font-weight: 700;
+  }
+  .pricing-card:hover { border-color: rgba(200,169,110,0.4); transform: translateY(-4px); }
+  .pricing-card.featured:hover { transform: translateY(-4px); }
+  .pricing-tier {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+  .pricing-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+  }
+  .pricing-range {
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--white);
+    margin-bottom: 0.5rem;
+  }
+  .pricing-note { font-size: 12px; color: var(--muted); margin-bottom: 2rem; }
+  .pricing-list { list-style: none; margin-bottom: 2.5rem; }
+  .pricing-list li {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.75rem;
+    font-weight: 300;
+  }
+  .pricing-list li::before {
+    content: '';
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .pricing-cta {
+    display: block;
+    text-align: center;
+    padding: 0.9rem;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: all 0.25s;
+    cursor: none;
+  }
+  .pricing-cta:hover, .pricing-card.featured .pricing-cta {
+    background: var(--gold);
+    color: var(--black);
+  }
+  .pricing-card.featured .pricing-cta:hover { background: var(--gold-light); }
+
+  /* Contact */
+  .contact { background: var(--deep); }
+  .contact-inner {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 6rem;
+    align-items: start;
+  }
+  .contact-info { padding-top: 0.5rem; }
+  .contact-detail {
+    margin-top: 3rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
+  .contact-item {
+    display: flex; gap: 1.25rem;
+    align-items: flex-start;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .contact-item:last-child { border-bottom: none; }
+  .contact-item-icon {
+    font-size: 1.2rem;
+    min-width: 28px;
+    margin-top: 2px;
+  }
+  .contact-item-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+  .contact-item-val { font-size: 14px; color: var(--muted); font-weight: 300; }
+
+  /* Form */
+  .quote-form { display: flex; flex-direction: column; gap: 1.25rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+  .form-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .form-input, .form-select, .form-textarea {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--white);
+    padding: 0.9rem 1.1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    cursor: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--gold);
+  }
+  .form-select { appearance: none; }
+  .form-textarea { resize: vertical; min-height: 120px; }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--subtle); }
+  .form-submit {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--gold);
+    color: var(--black);
+    padding: 1.1rem 2.5rem;
+    border: none;
+    cursor: none;
+    font-weight: 700;
+    transition: all 0.25s;
+    align-self: flex-start;
+    margin-top: 0.5rem;
+  }
+  .form-submit:hover { background: var(--gold-light); transform: translateY(-2px); }
+
+  /* Footer */
+  footer {
+    background: var(--black);
+    border-top: 1px solid var(--border);
+    padding: 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.12em;
+    color: var(--white);
+  }
+  .footer-logo span { color: var(--gold); }
+  .footer-links { display: flex; gap: 2rem; }
+  .footer-links a {
+    font-size: 12px;
+    color: var(--subtle);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--muted); }
+  .footer-copy {
+    font-size: 11px;
+    color: var(--subtle);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Ticker */
+  .ticker {
+    background: #0e1e3a;
+    padding: 0.75rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 1px solid rgba(74,158,255,0.2);
+    border-bottom: 1px solid rgba(74,158,255,0.2);
+  }
+  .ticker-inner {
+    display: inline-flex;
+    animation: ticker 20s linear infinite;
+    gap: 0;
+  }
+  .ticker-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.15em;
+    color: #4A9EFF;
+    padding: 0 3rem;
+  }
+  .ticker-sep {
+    color: rgba(74,158,255,0.3);
+    font-size: 1rem;
+    font-family: 'Bebas Neue', sans-serif;
+  }
+  @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* Reveal animation */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Mobile nav toggle */
+  .nav-toggle { display: none; }
+
+  @media (max-width: 900px) {
+    nav { padding: 1.25rem 1.5rem; }
+    .nav-links { display: none; }
+    .nav-toggle {
+      display: block;
+      background: none; border: none;
+      color: var(--white); font-size: 1.5rem; cursor: pointer;
+    }
+    .hero { padding: 0 1.5rem 5rem; }
+    .hero-stats { display: none; }
+    section { padding: 5rem 1.5rem; }
+    .markets-grid { grid-template-columns: 1fr 1fr; }
+    .fleet-inner { grid-template-columns: 1fr; gap: 3rem; }
+    .why-grid { grid-template-columns: 1fr; }
+    .process-steps { grid-template-columns: 1fr 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .contact-inner { grid-template-columns: 1fr; gap: 3rem; }
+    .form-row { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+  }
+
+  option { background: var(--deep); }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#" class="nav-logo">LUMA <span>DRONE</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#markets" onclick="closeNav()">Markets</a></li>
+    <li><a href="#fleet" onclick="closeNav()">Fleet</a></li>
+    <li><a href="#process" onclick="closeNav()">Process</a></li>
+    <li><a href="#pricing" onclick="closeNav()">Pricing</a></li>
+    <li><a href="#contact" onclick="closeNav()">Contact</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:1.25rem;">
+    <a href="#contact" class="nav-cta">Get a Quote</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" onclick="toggleNav()">☰</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <div class="stars" id="stars"></div>
+  <canvas class="drone-canvas" id="droneCanvas"></canvas>
+  <div class="hero-bg"></div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">500-drone fleet · FAA certified · Nationwide</div>
+    <h1 class="hero-title">
+      THE SKY IS<br>
+      YOUR <span class="gold">CANVAS</span>
+    </h1>
+    <p class="hero-body">
+      Luma Drone transforms any event into an unforgettable aerial spectacle. Custom formations, your logo, your story — written in light across the night sky.
+    </p>
+    <div class="hero-actions">
+      <a href="#contact" class="btn-primary">Book Your Show</a>
+      <a href="#showreel" class="btn-ghost">
+        <span class="arrow"></span>
+        Watch the reel
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">500</div>
+      <div class="stat-label">Drones</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">FAA</div>
+      <div class="stat-label">Certified</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">$5M</div>
+      <div class="stat-label">Insured</div>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- Ticker -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">
+    <span class="ticker-item">Corporate Launches</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Music Festivals</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Stadium Events</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">City Celebrations</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Private Events</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Brand Activations</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">New Year Countdowns</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Product Reveals</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Corporate Launches</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Music Festivals</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Stadium Events</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">City Celebrations</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Private Events</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Brand Activations</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">New Year Countdowns</span><span class="ticker-sep">·</span>
+    <span class="ticker-item">Product Reveals</span><span class="ticker-sep">·</span>
+  </div>
+</div>
+
+<!-- Markets -->
+<section class="markets" id="markets">
+  <div class="section-label">What we do</div>
+  <h2 class="section-title reveal">EVERY STAGE.<br>EVERY SKY.</h2>
+  <p class="reveal" style="color:var(--muted);max-width:560px;font-size:1.05rem;font-weight:300;">From stadium openers to intimate brand reveals, our 500-drone fleet adapts to any audience, any venue, any vision.</p>
+
+  <div class="markets-grid reveal">
+    <div class="market-card">
+      <span class="market-icon">🏢</span>
+      <div class="market-name">Corporate & Brand</div>
+      <div class="market-desc">Product launches, annual conferences, brand reveals. Your logo at 400 feet — impossible to ignore, impossible to forget.</div>
+      <div class="market-price">FROM $120K</div>
+    </div>
+    <div class="market-card">
+      <span class="market-icon">🎵</span>
+      <div class="market-name">Music Festivals</div>
+      <div class="market-desc">Headline acts deserve headline moments. Synchronized drone choreography timed to the beat of the closing set.</div>
+      <div class="market-price">FROM $100K</div>
+    </div>
+    <div class="market-card">
+      <span class="market-icon">🏟️</span>
+      <div class="market-name">Sports & Stadiums</div>
+      <div class="market-desc">Season openers, halftime shows, championship celebrations. Give your fans a pre-game show they'll stream for years.</div>
+      <div class="market-price">FROM $80K</div>
+    </div>
+    <div class="market-card">
+      <span class="market-icon">🏛️</span>
+      <div class="market-name">Cities & Government</div>
+      <div class="market-desc">Independence Day, New Year's Eve, civic milestones. Replace aging fireworks with a clean, crowd-safe spectacle.</div>
+      <div class="market-price">FROM $60K</div>
+    </div>
+    <div class="market-card">
+      <span class="market-icon">💍</span>
+      <div class="market-name">Weddings & Private</div>
+      <div class="market-desc">The most memorable moment of the most important night. A custom aerial light show tailored to your story.</div>
+      <div class="market-price">FROM $25K</div>
+    </div>
+  </div>
+</section>
+
+<!-- Showreel -->
+<section class="showreel" id="showreel">
+  <div class="section-label" style="justify-content:center;">See it live</div>
+  <h2 class="section-title reveal">WATCH THE SHOW</h2>
+  <div class="reel-frame reveal" id="reelFrame">
+    <button class="play-btn" id="playBtn" aria-label="Play showreel">
+      <div class="play-triangle"></div>
+    </button>
+    <div class="reel-label">LUMA DRONE · SHOWREEL 2025</div>
+    <div class="reel-placeholder-text">Add your YouTube video ID to activate this player</div>
+  </div>
+</section>
+
+<!-- Video lightbox -->
+<div id="videoLightbox" style="display:none;position:fixed;inset:0;background:rgba(5,8,15,0.95);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;">
+  <button onclick="closeLightbox()" style="position:absolute;top:2rem;right:2rem;background:none;border:1px solid rgba(74,158,255,0.3);color:#eef3ff;width:44px;height:44px;font-size:1.3rem;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+  <div style="width:min(900px,92vw);aspect-ratio:16/9;background:#0e1628;" id="videoContainer"></div>
+</div>
+
+<!-- Fleet -->
+<section class="fleet" id="fleet">
+  <div class="fleet-inner">
+    <div>
+      <div class="section-label reveal">The fleet</div>
+      <h2 class="section-title reveal">500 DRONES.<br>ONE VISION.</h2>
+      <p class="reveal" style="color:var(--muted);font-size:1.05rem;font-weight:300;line-height:1.7;max-width:460px;">
+        Most drone shows run 100–200 units. Luma Drone's 500-unit fleet puts us in the top tier of operators in North America — capable of formations, complexity, and canvas size that competitors simply cannot match.
+      </p>
+      <div class="fleet-stats reveal">
+        <div class="fleet-stat">
+          <div class="fleet-stat-num">500</div>
+          <div class="fleet-stat-label">Active Drones</div>
+        </div>
+        <div class="fleet-stat">
+          <div class="fleet-stat-num">FAA</div>
+          <div class="fleet-stat-label">Part 107 Certified</div>
+        </div>
+        <div class="fleet-stat">
+          <div class="fleet-stat-num">$5M</div>
+          <div class="fleet-stat-label">Liability Coverage</div>
+        </div>
+        <div class="fleet-stat">
+          <div class="fleet-stat-num">48H</div>
+          <div class="fleet-stat-label">Permit Processing</div>
+        </div>
+      </div>
+    </div>
+    <div class="fleet-visual reveal" id="fleetVis">
+      <div class="fleet-number">500</div>
+      <div class="fleet-grid" id="fleetGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Why -->
+<section class="why" id="why">
+  <div class="section-label">Why Luma Drone</div>
+  <h2 class="section-title reveal">BUILT DIFFERENT.</h2>
+  <div class="why-grid">
+    <div class="why-card reveal">
+      <div class="why-num">01</div>
+      <div class="why-title">Top-Tier Fleet Size</div>
+      <div class="why-desc">With 500 drones, we create formations at a scale and complexity most operators can't touch. Bigger canvas. More detail. More impact.</div>
+    </div>
+    <div class="why-card reveal">
+      <div class="why-num">02</div>
+      <div class="why-title">Custom Choreography</div>
+      <div class="why-desc">Every show is built from scratch. Our design team creates bespoke animations, logo formations, and narrative arcs specific to your brand and event.</div>
+    </div>
+    <div class="why-card reveal">
+      <div class="why-num">03</div>
+      <div class="why-title">Fully Insured & Certified</div>
+      <div class="why-desc">$5M liability coverage, FAA Part 107 certified operators, and full permit handling. We manage all compliance so you don't have to.</div>
+    </div>
+    <div class="why-card reveal">
+      <div class="why-num">04</div>
+      <div class="why-title">End-to-End Logistics</div>
+      <div class="why-desc">Site survey, airspace clearance, rehearsal flights, live show — we handle the entire operation from first call to final drone landing.</div>
+    </div>
+    <div class="why-card reveal">
+      <div class="why-num">05</div>
+      <div class="why-title">Eco-Friendly Spectacle</div>
+      <div class="why-desc">No smoke. No debris. No noise restrictions. Drone light shows are clean, safe, and repeatable — with zero impact on the venue or community.</div>
+    </div>
+    <div class="why-card reveal">
+      <div class="why-num">06</div>
+      <div class="why-title">Content-Ready Production</div>
+      <div class="why-desc">Every show is produced with social media in mind. Aerial footage, crowd reaction captures, and highlight reels are ready within 24 hours of the event.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Process -->
+<section class="process" id="process">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title reveal">FROM CONCEPT<br>TO SKY.</h2>
+  <div class="process-steps">
+    <div class="process-step reveal">
+      <div class="step-dot"></div>
+      <div class="step-num">Step 01</div>
+      <div class="step-title">Discovery Call</div>
+      <div class="step-desc">We learn your event, audience, and vision. You'll get a ballpark quote within 24 hours.</div>
+    </div>
+    <div class="process-step reveal">
+      <div class="step-dot"></div>
+      <div class="step-num">Step 02</div>
+      <div class="step-title">Design & Choreography</div>
+      <div class="step-desc">Our team builds your custom formation sequence and sends a 3D animated preview for approval.</div>
+    </div>
+    <div class="process-step reveal">
+      <div class="step-dot"></div>
+      <div class="step-num">Step 03</div>
+      <div class="step-title">Permits & Logistics</div>
+      <div class="step-desc">We handle FAA waivers, site surveys, and all airspace coordination. 100% managed by our team.</div>
+    </div>
+    <div class="process-step reveal">
+      <div class="step-dot"></div>
+      <div class="step-num">Step 04</div>
+      <div class="step-title">Show Night</div>
+      <div class="step-desc">Our crew deploys, rehearses, and executes. You watch 500 drones light up the sky — on cue.</div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+  <div class="section-label">Investment</div>
+  <h2 class="section-title reveal">SHOW PACKAGES</h2>
+  <p class="reveal" style="color:var(--muted);max-width:500px;font-weight:300;">Custom quotes available for all events. Every show includes design, permits, logistics, and post-show content delivery.</p>
+
+  <div class="pricing-grid">
+    <div class="pricing-card reveal">
+      <div class="pricing-tier">Starter</div>
+      <div class="pricing-name">City & Private</div>
+      <div class="pricing-range">$25K – $80K</div>
+      <div class="pricing-note">Weddings, private events, municipal shows</div>
+      <ul class="pricing-list">
+        <li>Up to 300 drones</li>
+        <li>5–8 minute show</li>
+        <li>2 custom formations</li>
+        <li>FAA permit handling</li>
+        <li>Post-show highlight reel</li>
+      </ul>
+      <a href="#contact" class="pricing-cta">Get a Quote</a>
+    </div>
+
+    <div class="pricing-card featured reveal">
+      <div class="pricing-tier">Signature</div>
+      <div class="pricing-name">Sports & Festivals</div>
+      <div class="pricing-range">$80K – $180K</div>
+      <div class="pricing-note">Stadiums, halftime shows, major festivals</div>
+      <ul class="pricing-list">
+        <li>Full 500-drone fleet</li>
+        <li>10–15 minute show</li>
+        <li>Unlimited formations</li>
+        <li>Rehearsal flight included</li>
+        <li>Multi-camera content package</li>
+        <li>On-site operations crew</li>
+      </ul>
+      <a href="#contact" class="pricing-cta">Get a Quote</a>
+    </div>
+
+    <div class="pricing-card reveal">
+      <div class="pricing-tier">Premium</div>
+      <div class="pricing-name">Corporate & Brand</div>
+      <div class="pricing-range">$120K – $250K</div>
+      <div class="pricing-note">Brand launches, product reveals, conferences</div>
+      <ul class="pricing-list">
+        <li>Full 500-drone fleet</li>
+        <li>Fully custom choreography</li>
+        <li>Logo & brand integration</li>
+        <li>Multiple show nights</li>
+        <li>Branded content rights</li>
+        <li>Dedicated account manager</li>
+      </ul>
+      <a href="#contact" class="pricing-cta">Get a Quote</a>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section class="contact" id="contact">
+  <div class="contact-inner">
+    <div class="contact-info">
+      <div class="section-label">Let's talk</div>
+      <h2 class="section-title reveal">GET YOUR<br>SHOW QUOTE</h2>
+      <p class="reveal" style="color:var(--muted);font-weight:300;line-height:1.8;font-size:1rem;">
+        Tell us about your event and we'll respond within 24 hours with a tailored proposal. No commitment required.
+      </p>
+      <div class="contact-detail reveal">
+        <div class="contact-item">
+          <div class="contact-item-icon">✉</div>
+          <div>
+            <div class="contact-item-label">Email</div>
+            <div class="contact-item-val">sales@lumadrone.com</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">📍</div>
+          <div>
+            <div class="contact-item-label">Headquarters</div>
+            <div class="contact-item-val">Los Angeles, CA · Available Nationwide</div>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-item-icon">⏱</div>
+          <div>
+            <div class="contact-item-label">Response Time</div>
+            <div class="contact-item-val">Within 24 hours · 7 days a week</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <form class="quote-form reveal" id="quoteForm" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name *</label>
+          <input type="text" class="form-input" id="f-first" placeholder="Jane" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name *</label>
+          <input type="text" class="form-input" id="f-last" placeholder="Smith" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email Address *</label>
+        <input type="email" class="form-input" id="f-email" placeholder="jane@company.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Organization / Company</label>
+        <input type="text" class="form-input" id="f-org" placeholder="Company or event name">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Event Type *</label>
+          <select class="form-select form-input" id="f-type" required>
+            <option value="">Select type</option>
+            <option>Corporate / Brand Launch</option>
+            <option>Music Festival</option>
+            <option>Sports / Stadium</option>
+            <option>City / Government</option>
+            <option>Wedding / Private</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estimated Budget</label>
+          <select class="form-select form-input" id="f-budget">
+            <option value="">Select range</option>
+            <option>$25K – $60K</option>
+            <option>$60K – $100K</option>
+            <option>$100K – $200K</option>
+            <option>$200K+</option>
+            <option>Flexible / TBD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Event Date</label>
+          <input type="date" class="form-input" id="f-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Event Location</label>
+          <input type="text" class="form-input" id="f-location" placeholder="City, State">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tell us about your vision</label>
+        <textarea class="form-textarea" id="f-message" placeholder="Audience size, themes, any specific ideas..."></textarea>
+      </div>
+      <div id="form-error" style="display:none;color:#ff6b6b;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.08em;"></div>
+      <button type="submit" class="form-submit" id="formBtn">Send Request →</button>
+    </form>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">LUMA <span>DRONE</span></div>
+  <div class="footer-links">
+    <a href="#markets">Markets</a>
+    <a href="#fleet">Fleet</a>
+    <a href="#process">Process</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="footer-copy">© 2025 Luma Drone. All rights reserved.</div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+  // ── CONFIG ─────────────────────────────────────────
+  const YOUTUBE_VIDEO_ID   = '';        // Your YouTube video ID
+  const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // emailjs.com → Account → Public Key
+  const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // emailjs.com → Email Services → Service ID
+  const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // emailjs.com → Email Templates → Template ID
+  // ────────────────────────────────────────────────────
+
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+  function animCursor() {
+    cursor.style.left = mx + 'px'; cursor.style.top = my + 'px';
+    rx += (mx - rx) * 0.12; ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px'; ring.style.top = ry + 'px';
+    requestAnimationFrame(animCursor);
+  }
+  animCursor();
+
+  // Nav scroll
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // Mobile nav toggle
+  let navOpen = false;
+  function toggleNav() {
+    navOpen = !navOpen;
+    const links = document.getElementById('navLinks');
+    const btn = document.getElementById('navToggle');
+    links.style.display = navOpen ? 'flex' : '';
+    links.style.flexDirection = navOpen ? 'column' : '';
+    links.style.position = navOpen ? 'absolute' : '';
+    links.style.top = navOpen ? '100%' : '';
+    links.style.left = navOpen ? '0' : '';
+    links.style.right = navOpen ? '0' : '';
+    links.style.background = navOpen ? 'rgba(5,8,15,0.98)' : '';
+    links.style.padding = navOpen ? '1.5rem 2rem' : '';
+    links.style.borderBottom = navOpen ? '1px solid rgba(74,158,255,0.15)' : '';
+    links.style.gap = navOpen ? '1.25rem' : '';
+    btn.textContent = navOpen ? '✕' : '☰';
+  }
+  function closeNav() {
+    if (navOpen) toggleNav();
+  }
+
+  // Stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--dur:${3+Math.random()*5}s;--del:${Math.random()*6}s;--op:${0.3+Math.random()*0.7};`;
+    starsEl.appendChild(s);
+  }
+
+  // Drone canvas animation
+  const canvas = document.getElementById('droneCanvas');
+  const ctx = canvas.getContext('2d');
+  let drones = [];
+  let W, H;
+  function resize() {
+    W = canvas.width = canvas.offsetWidth;
+    H = canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); initDrones(); });
+
+  function initDrones() {
+    drones = [];
+    for (let i = 0; i < 80; i++) {
+      drones.push({
+        x: Math.random() * W, y: Math.random() * H,
+        tx: 0, ty: 0, vx: 0, vy: 0,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.5 + 0.1,
+        speed: Math.random() * 0.008 + 0.003,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function getFormation(t) {
+    const cx = W * 0.65, cy = H * 0.4;
+    const scale = Math.min(W, H) * 0.35;
+    const angle = t * 0.0003;
+    const pts = [];
+    for (let i = 0; i < 80; i++) {
+      const a = (i / 80) * Math.PI * 2;
+      const r = scale * (0.4 + 0.08 * Math.sin(a * 5));
+      pts.push({ tx: cx + Math.cos(a + angle) * r, ty: cy + Math.sin(a + angle) * r * 0.6 });
+    }
+    return pts;
+  }
+
+  function drawDrones(t) {
+    ctx.clearRect(0, 0, W, H);
+    const formation = getFormation(t);
+    drones.forEach((d, i) => {
+      if (formation[i]) {
+        d.tx = formation[i].tx; d.ty = formation[i].ty;
+        d.vx += (d.tx - d.x) * d.speed; d.vy += (d.ty - d.y) * d.speed;
+        d.vx *= 0.92; d.vy *= 0.92;
+        d.x += d.vx; d.y += d.vy;
+      }
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.002 + d.phase);
+      const op = d.opacity * (0.6 + 0.4 * pulse);
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(74,158,255,${op})`;
+      ctx.fill();
+      const grd = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.size * 5);
+      grd.addColorStop(0, `rgba(74,158,255,${op * 0.3})`);
+      grd.addColorStop(1, 'rgba(74,158,255,0)');
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.size * 5, 0, Math.PI * 2);
+      ctx.fillStyle = grd;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawDrones);
+  }
+  initDrones();
+  requestAnimationFrame(drawDrones);
+
+  // Fleet grid
+  const grid = document.getElementById('fleetGrid');
+  for (let i = 0; i < 400; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'drone-dot';
+    dot.style.cssText = `--d:${(Math.random()*3).toFixed(2)}s;--op:${(Math.random()*0.5+0.1).toFixed(2)};`;
+    grid.appendChild(dot);
+  }
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { setTimeout(() => e.target.classList.add('visible'), 80); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+  reveals.forEach(r => io.observe(r));
+
+  // Video lightbox
+  const lightbox = document.getElementById('videoLightbox');
+  document.getElementById('playBtn').addEventListener('click', () => {
+    if (!YOUTUBE_VIDEO_ID) {
+      document.querySelector('.reel-placeholder-text').style.color = '#4A9EFF';
+      document.querySelector('.reel-placeholder-text').textContent = '⚡ Set YOUTUBE_VIDEO_ID at the top of the script to activate this player';
+      return;
+    }
+    const container = document.getElementById('videoContainer');
+    container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="display:block;"></iframe>`;
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  });
+  function closeLightbox() {
+    lightbox.style.display = 'none';
+    document.getElementById('videoContainer').innerHTML = '';
+    document.body.style.overflow = '';
+  }
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  // Init EmailJS
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+
+  // Form validation & submission via EmailJS → sales@lumadrone.com
+  document.getElementById('quoteForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const errEl = document.getElementById('form-error');
+    const btn = document.getElementById('formBtn');
+    errEl.style.display = 'none';
+
+    const first = document.getElementById('f-first').value.trim();
+    const last  = document.getElementById('f-last').value.trim();
+    const email = document.getElementById('f-email').value.trim();
+    const type  = document.getElementById('f-type').value;
+
+    if (!first || !last) { showError('Please enter your first and last name.'); return; }
+    if (!email || !email.includes('@') || !email.includes('.')) { showError('Please enter a valid email address.'); return; }
+    if (!type) { showError('Please select an event type.'); return; }
+
+    btn.textContent = 'Sending...';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+
+    const templateParams = {
+      from_name:    `${first} ${last}`,
+      from_email:   email,
+      organization: document.getElementById('f-org').value.trim(),
+      event_type:   type,
+      budget:       document.getElementById('f-budget').value || 'Not specified',
+      event_date:   document.getElementById('f-date').value || 'Not specified',
+      location:     document.getElementById('f-location').value.trim() || 'Not specified',
+      message:      document.getElementById('f-message').value.trim() || 'No details provided',
+      to_email:     'sales@lumadrone.com'
+    };
+
+    const isConfigured = EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY' && EMAILJS_SERVICE_ID !== 'YOUR_SERVICE_ID';
+
+    if (isConfigured) {
+      try {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams);
+        showSuccess();
+      } catch(err) {
+        console.error('EmailJS error:', err);
+        showError('Something went wrong sending your message. Please email us directly at sales@lumadrone.com');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.textContent = 'Send Request →';
+      }
+    } else {
+      // Fallback: open mailto with all details pre-filled
+      setTimeout(() => {
+        const subject = encodeURIComponent(`Show Quote Request – ${type}`);
+        const body = encodeURIComponent(
+          `New quote request from the Luma Drone website\n\n` +
+          `Name: ${first} ${last}\n` +
+          `Email: ${email}\n` +
+          `Organization: ${templateParams.organization || 'Not provided'}\n` +
+          `Event Type: ${type}\n` +
+          `Budget: ${templateParams.budget}\n` +
+          `Event Date: ${templateParams.event_date}\n` +
+          `Location: ${templateParams.location}\n\n` +
+          `Vision / Details:\n${templateParams.message}`
+        );
+        window.open(`mailto:sales@lumadrone.com?subject=${subject}&body=${body}`);
+        showSuccess();
+      }, 600);
+    }
+  });
+
+  function showError(msg) {
+    const el = document.getElementById('form-error');
+    el.textContent = '⚠ ' + msg;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showSuccess() {
+    const form = document.getElementById('quoteForm');
+    form.innerHTML = `
+      <div style="padding:3rem 2rem;text-align:center;border:1px solid rgba(74,158,255,0.2);background:rgba(74,158,255,0.04);">
+        <div style="font-size:2.5rem;margin-bottom:1rem;">✓</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.05em;margin-bottom:0.75rem;color:#eef3ff;">Request Received</div>
+        <div style="font-size:14px;color:rgba(220,232,255,0.5);line-height:1.7;">We'll be in touch within 24 hours.<br>Check your inbox for a confirmation.</div>
+      </div>`;
+  }
+</script>
+</body>
+</html>
