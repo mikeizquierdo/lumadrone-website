@@ -1168,38 +1168,33 @@
 
 <!-- Gallery -->
 <section class="gallery" id="gallery">
-  <div class="section-label">In the sky</div>
-  <h2 class="section-title reveal">THE WORK</h2>
-  <p class="reveal" style="color:var(--muted);max-width:520px;font-weight:300;">Every show is a custom creation — formations, narratives, and moments engineered for the audience and the moment.</p>
+  <div class="section-label">The showreel</div>
+  <h2 class="section-title reveal">SEE IT IN ACTION</h2>
+  <p class="reveal" style="color:var(--muted);max-width:520px;font-weight:300;">Watch our latest drone light show — 500 drones, fully choreographed, captured live.</p>
 
-  <div class="gallery-grid reveal">
-    <div class="gallery-item large">
-      <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1200&q=80&auto=format&fit=crop" alt="Night sky drone show" loading="lazy">
-      <div class="gallery-caption">Formation show · Night sky</div>
+  <div class="reveal" style="margin-top:3rem;max-width:960px;aspect-ratio:16/9;background:var(--surface);border:1px solid var(--border);position:relative;overflow:hidden;">
+    <iframe
+      src="https://player.vimeo.com/video/1008611292?title=0&byline=0&portrait=0&color=4A9EFF"
+      width="100%" height="100%"
+      style="position:absolute;top:0;left:0;width:100%;height:100%;"
+      frameborder="0"
+      allow="autoplay; fullscreen; picture-in-picture"
+      allowfullscreen>
+    </iframe>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;" class="reveal">
+    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">500</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Drones per show</div>
     </div>
-    <div class="gallery-item tall">
-      <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&auto=format&fit=crop" alt="Aerial display" loading="lazy">
-      <div class="gallery-caption">Aerial display · Mountain venue</div>
+    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">15+</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Minutes of sky</div>
     </div>
-    <div class="gallery-item wide">
-      <img src="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=900&q=80&auto=format&fit=crop" alt="Night show" loading="lazy">
-      <div class="gallery-caption">City celebration</div>
-    </div>
-    <div class="gallery-item wide">
-      <img src="https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=900&q=80&auto=format&fit=crop" alt="Drone fleet" loading="lazy">
-      <div class="gallery-caption">Fleet deployment</div>
-    </div>
-    <div class="gallery-item med">
-      <img src="https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80&auto=format&fit=crop" alt="Landscape show" loading="lazy">
-      <div class="gallery-caption">Festival show</div>
-    </div>
-    <div class="gallery-item small">
-      <img src="https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?w=600&q=80&auto=format&fit=crop" alt="Architecture light" loading="lazy">
-      <div class="gallery-caption">Corporate launch</div>
-    </div>
-    <div class="gallery-item small">
-      <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80&auto=format&fit=crop" alt="Tech event" loading="lazy">
-      <div class="gallery-caption">Brand activation</div>
+    <div style="padding:2rem;border:1px solid var(--border);background:var(--surface);text-align:center;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:var(--gold);letter-spacing:0.05em;">100%</div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.5rem;">Custom choreography</div>
     </div>
   </div>
 </section>
@@ -1518,13 +1513,9 @@
   // Video lightbox
   const lightbox = document.getElementById('videoLightbox');
   document.getElementById('playBtn').addEventListener('click', () => {
-    if (!YOUTUBE_VIDEO_ID) {
-      document.querySelector('.reel-placeholder-text').style.color = '#4A9EFF';
-      document.querySelector('.reel-placeholder-text').textContent = '⚡ Set YOUTUBE_VIDEO_ID at the top of the script to activate this player';
-      return;
-    }
+    {
     const container = document.getElementById('videoContainer');
-    container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${YOUTUBE_VIDEO_ID}?autoplay=1&rel=0" frameborder="0" allow="autoplay; fullscreen" allowfullscreen style="display:block;"></iframe>`;
+    container.innerHTML = `<iframe width="100%" height="100%" src="https://player.vimeo.com/video/1008611292?autoplay=1&title=0&byline=0&portrait=0" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="display:block;"></iframe>`;
     lightbox.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   });
