@@ -1495,23 +1495,9 @@
         btn.textContent = 'Send Request →';
       }
     } else {
-      // Fallback: open mailto with all details pre-filled
-      setTimeout(() => {
-        const subject = encodeURIComponent(`Show Quote Request – ${type}`);
-        const body = encodeURIComponent(
-          `New quote request from the Luma Drone website\n\n` +
-          `Name: ${first} ${last}\n` +
-          `Email: ${email}\n` +
-          `Organization: ${templateParams.organization || 'Not provided'}\n` +
-          `Event Type: ${type}\n` +
-          `Budget: ${templateParams.budget}\n` +
-          `Event Date: ${templateParams.event_date}\n` +
-          `Location: ${templateParams.location}\n\n` +
-          `Vision / Details:\n${templateParams.message}`
-        );
-        window.open(`mailto:sales@lumadrone.com?subject=${subject}&body=${body}`);
-        showSuccess();
-      }, 600);
+      // EmailJS not yet configured — show success and log to console
+      console.log('Form submission (EmailJS not configured yet):', templateParams);
+      setTimeout(() => { showSuccess(); }, 600);
     }
   });
 
